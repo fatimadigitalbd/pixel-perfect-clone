@@ -56,7 +56,8 @@ function Accounts() {
     const paid = tx.kind === "expense" ? amount : Number(tx.paid_amount);
     if (!(amount >= 0) || !(paid >= 0) || paid > amount) return toast.error("পরিমাণ সঠিক নয় (পরিশোধ মোটের বেশি হতে পারে না)");
     const { data: u } = await supabase.auth.getUser();
-    const payload = { ...tx, amount, paid_amount: paid };
+    const { id: _i, ...rest } = tx; void _i;
+    const payload = { ...rest, amount, paid_amount: paid };
     const res = tx.id
       ? await supabase.from("transactions").update(payload).eq("id", tx.id)
       : await supabase.from("transactions").insert({ ...payload, created_by: u.user!.id });
@@ -90,7 +91,7 @@ function Accounts() {
       const j = JSON.parse(await f.text());
       const list = (j.transactions ?? []) as Tx[];
       const { data: u } = await supabase.auth.getUser();
-      const clean = list.map(({ kind, amount, paid_amount, category, description, customer_name, payment_method, txn_date, id }) => ({ id, kind, amount, paid_amount, category, description, customer_name, payment_method, txn_date, created_by: u.user!.id }));
+      const clean = list.map(({ kind, amount, paid_amount, category, description, customer_name, payment_method, txn_date, id }) => ({ id, kind, amount: Number(amount), paid_amount: Number(paid_amount), category, description, customer_name, payment_method, txn_date, created_by: u.user!.id }));
       const { error } = await supabase.from("transactions").upsert(clean, { onConflict: "id", ignoreDuplicates: true });
       if (error) throw error;
       await audit("transaction.restore", { count: clean.length });
@@ -159,7 +160,7 @@ function Accounts() {
                   <td className={`p-3 text-right font-semibold ${r.kind === "income" ? "text-teal" : "text-destructive"}`}>{r.kind === "income" ? "+" : "−"}{taka(r.amount)}</td>
                   <td className="p-3 text-right">{d > 0 ? taka(d) : "—"}</td>
                   <td className="p-3 whitespace-nowrap text-right print:hidden">
-                    <button aria-label="edit" className="mr-2 text-muted-foreground hover:text-foreground" onClick={() => setEdit({ ...r })}><Pencil className="h-4 w-4" /></button>
+                    <button aria-label="edit" className="mr-2 text-muted-foreground hover:text-foreground" onClick={() => setEdit({ ...r, kind: r.kind as Tx["kind"] })}><Pencil className="h-4 w-4" /></button>
                     {me.data?.isAdmin && <button aria-label="delete" className="text-muted-foreground hover:text-destructive" onClick={() => del(r.id)}><Trash2 className="h-4 w-4" /></button>}
                   </td>
                 </tr>

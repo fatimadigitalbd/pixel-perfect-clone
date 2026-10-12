@@ -7,7 +7,7 @@ import { trackOrder } from "@/lib/orders.functions";
 import { ORDER_STATUSES } from "@/lib/format";
 
 export const Route = createFileRoute("/track")({
-  validateSearch: (s: Record<string, unknown>) => ({ no: typeof s.no === "string" ? s.no : undefined }),
+  validateSearch: (s: Record<string, unknown>) => ({ no: typeof s["no"] === "string" ? (s["no"] as string) : undefined }) as { no?: string },
   head: () => ({
     meta: [
       { title: "অর্ডার ট্র্যাক — ফাতিমা ডিজিটাল" },
