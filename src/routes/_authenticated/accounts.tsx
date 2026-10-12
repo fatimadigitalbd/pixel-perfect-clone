@@ -91,7 +91,7 @@ function Accounts() {
       const j = JSON.parse(await f.text());
       const list = (j.transactions ?? []) as Tx[];
       const { data: u } = await supabase.auth.getUser();
-      const clean = list.map(({ kind, amount, paid_amount, category, description, customer_name, payment_method, txn_date, id }) => ({ id, kind, amount, paid_amount, category, description, customer_name, payment_method, txn_date, created_by: u.user!.id, amount: Number(amount), paid_amount: Number(paid_amount) }));
+      const clean = list.map(({ kind, amount, paid_amount, category, description, customer_name, payment_method, txn_date, id }) => ({ id, kind, amount: Number(amount), paid_amount: Number(paid_amount), category, description, customer_name, payment_method, txn_date, created_by: u.user!.id }));
       const { error } = await supabase.from("transactions").upsert(clean, { onConflict: "id", ignoreDuplicates: true });
       if (error) throw error;
       await audit("transaction.restore", { count: clean.length });

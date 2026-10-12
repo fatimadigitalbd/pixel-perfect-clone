@@ -38,7 +38,7 @@ function Index() {
               <Link to="/upload"><Upload className="mr-2 h-5 w-5" /> ফাইল পাঠান</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground">
-              <Link to="/track"><Search className="mr-2 h-5 w-5" /> অর্ডার ট্র্যাক করুন</Link>
+              <Link to="/track" search={{}}><Search className="mr-2 h-5 w-5" /> অর্ডার ট্র্যাক করুন</Link>
             </Button>
           </div>
         </div>
