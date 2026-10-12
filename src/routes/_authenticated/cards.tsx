@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { toast } from "sonner";
-import { Download, Printer, Upload, Plus, Trash2, Copy, Users } from "lucide-react";
+import { Download, Upload, Plus, Trash2, Copy, Users } from "lucide-react";
 import { PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -233,9 +233,6 @@ function Cards() {
               ))}
             </div>
           </div>
-          <Button variant="outline" size="sm" className="w-full" onClick={() => window.print}>
-            <Printer className="mr-1 h-4 w-4" /> প্রিন্ট বাটন উপরে আছে
-          </Button>
         </aside>
       </div>
     </div>
