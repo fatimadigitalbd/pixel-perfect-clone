@@ -12,6 +12,8 @@ import { submitOrder } from "@/lib/orders.functions";
 export const Route = createFileRoute("/upload")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "ফাইল পাঠান — ফাতিমা ডিজিটাল" },
       { name: "description", content: "ফোন থেকে ছবি বা ডকুমেন্ট ফাতিমা ডিজিটালে পাঠান এবং অর্ডার নম্বর নিন।" },
       { property: "og:title", content: "ফাইল পাঠান — ফাতিমা ডিজিটাল" },

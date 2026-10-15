@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { downloadBlob } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/cards")({
-  head: () => ({ meta: [{ title: "কার্ড ডিজাইনার — Fatima Digital" }] }),
+  head: () => ({ meta: [{"title": "কার্ড ডিজাইনার — Fatima Digital"}, {"name": "description", "content": "ভিজিটিং কার্ড, আইডি কার্ড ও প্রিন্ট শিট তৈরি।"}, {"property": "og:title", "content": "কার্ড ডিজাইনার — Fatima Digital"}, {"property": "og:description", "content": "ভিজিটিং কার্ড, আইডি কার্ড ও প্রিন্ট শিট তৈরি।"}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: Cards,
 });
 

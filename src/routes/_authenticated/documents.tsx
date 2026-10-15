@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { DOC_TEMPLATES, PAGE_SIZES } from "@/lib/doc-templates";
 
 export const Route = createFileRoute("/_authenticated/documents")({
-  head: () => ({ meta: [{ title: "বাংলা ডকুমেন্ট — Fatima Digital" }] }),
+  head: () => ({ meta: [{"title": "বাংলা ডকুমেন্ট — Fatima Digital"}, {"name": "description", "content": "বাংলা আবেদনপত্র, চুক্তিপত্র ও ডকুমেন্ট সম্পাদনা।"}, {"property": "og:title", "content": "বাংলা ডকুমেন্ট — Fatima Digital"}, {"property": "og:description", "content": "বাংলা আবেদনপত্র, চুক্তিপত্র ও ডকুমেন্ট সম্পাদনা।"}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: Docs,
 });
 

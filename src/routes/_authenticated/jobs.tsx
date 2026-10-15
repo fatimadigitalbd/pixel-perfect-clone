@@ -15,7 +15,7 @@ import { todayISO } from "@/lib/format";
 import { useMe } from "@/hooks/use-session";
 
 export const Route = createFileRoute("/_authenticated/jobs")({
-  head: () => ({ meta: [{ title: "চাকরির খবর — Fatima Digital" }] }),
+  head: () => ({ meta: [{"title": "চাকরির খবর — Fatima Digital"}, {"name": "description", "content": "অফিসিয়াল সূত্রের চাকরির বিজ্ঞপ্তি ও আবেদনের সময়সীমা।"}, {"property": "og:title", "content": "চাকরির খবর — Fatima Digital"}, {"property": "og:description", "content": "অফিসিয়াল সূত্রের চাকরির বিজ্ঞপ্তি ও আবেদনের সময়সীমা।"}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: Jobs,
 });
 

@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "ফাতিমা ডিজিটাল — ফটো, প্রিন্ট ও কম্পিউটার সেবা | Faydabad" },
       { name: "description", content: "ফাতিমা ডিজিটাল, ফায়দাবাদ, ঢাকা ১২৩০। ফোন থেকে ফাইল পাঠান, অর্ডারের অবস্থা দেখুন।" },
       { property: "og:title", content: "ফাতিমা ডিজিটাল — Smart Studio" },

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Cropper, { type Area } from "react-easy-crop";
 import { toast } from "sonner";
-import { Upload, Download, Printer, RotateCw } from "lucide-react";
+import { Upload, Download, Printer, RotateCw, Eraser, Scan, Undo2, LoaderCircle } from "lucide-react";
 import { PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,14 @@ import { Slider } from "@/components/ui/slider";
 import { downloadBlob } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/photo")({
-  head: () => ({ meta: [{ title: "পাসপোর্ট ছবি — Fatima Digital" }] }),
+  head: () => ({ meta: [
+    { title: "পাসপোর্ট ছবি ও AI স্টুডিও — Fatima Digital" },
+    { name: "description", content: "পাসপোর্ট ছবির ব্যাকগ্রাউন্ড রিমুভ, AI আপস্কেল, ক্রপ ও ৩০০ DPI প্রিন্ট শিট।" },
+    { property: "og:title", content: "পাসপোর্ট ছবি ও AI স্টুডিও — Fatima Digital" },
+    { property: "og:description", content: "ব্যাকগ্রাউন্ড রিমুভ, ২×/৪× আপস্কেল ও প্রিন্ট-রেডি পাসপোর্ট ছবি।" },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: PhotoStudio,
 });
 
@@ -42,6 +49,14 @@ function loadImage(src: string) {
 
 function PhotoStudio() {
   const [src, setSrc] = useState<string | null>(null);
+  const [original, setOriginal] = useState<string | null>(null);
+  const [busy, setBusy] = useState<"remove" | "upscale" | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [scale, setScale] = useState<2 | 4>(2);
+  const [dimensions, setDimensions] = useState({ w: 0, h: 0 });
+  const [error, setError] = useState<string | null>(null);
+  const [removed, setRemoved] = useState(false);
+  const renderVersion = useRef(0);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
@@ -68,20 +83,57 @@ function PhotoStudio() {
     if (!f.type.startsWith("image/")) return toast.error("শুধু ছবি ফাইল (JPG/PNG/WEBP) দিন");
     if (f.size > 25 * 1024 * 1024) return toast.error("ছবি ২৫MB এর কম হতে হবে");
     const r = new FileReader();
-    r.onload = () => { setSrc(r.result as string); setZoom(1); setRotation(0); };
+    r.onload = () => {
+      const data = r.result as string;
+      setOriginal(data); setRemoved(false); setError(null);
+      replaceSource(data);
+    };
     r.readAsDataURL(f);
+  }
+
+  function replaceSource(data: string) {
+    renderVersion.current += 1;
+    setArea(null); setSingle(null); setSheet(null);
+    setSrc(data); setCrop({ x: 0, y: 0 }); setZoom(1); setRotation(0);
+    loadImage(data).then((image) => setDimensions({ w: image.width, h: image.height }));
+  }
+
+  async function editPhoto(action: "remove" | "upscale") {
+    if (!src || busy) return;
+    setBusy(action); setProgress(0); setError(null);
+    try {
+      const tools = await import("@/lib/photo-ai");
+      const blob = action === "remove"
+        ? await tools.removePhotoBackground(src, setProgress)
+        : await tools.upscalePhoto(src, scale, setProgress);
+      const data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      replaceSource(data);
+      if (action === "remove") setRemoved(true);
+      toast.success(action === "remove" ? "ব্যাকগ্রাউন্ড রিমুভ হয়েছে" : `${scale}× আপস্কেল হয়েছে`);
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : "ছবি সম্পাদনা করা যায়নি। আবার চেষ্টা করুন।";
+      setError(message); toast.error(message);
+    } finally { setBusy(null); }
   }
 
   const render = useCallback(async () => {
     if (!src || !area) return;
+    const version = ++renderVersion.current;
     const img = await loadImage(src);
+    if (version !== renderVersion.current) return;
     // rotate full image onto a canvas first (crop coordinates are relative to rotated bounding box)
     const rad = (rotation * Math.PI) / 180;
     const bw = Math.abs(Math.cos(rad) * img.width) + Math.abs(Math.sin(rad) * img.height);
     const bh = Math.abs(Math.sin(rad) * img.width) + Math.abs(Math.cos(rad) * img.height);
     const rc = document.createElement("canvas");
     rc.width = bw; rc.height = bh;
-    const rctx = rc.getContext("2d")!;
+    const rctx = rc.getContext("2d");
+    if (!rctx) return;
     rctx.translate(bw / 2, bh / 2);
     rctx.rotate(rad);
     rctx.drawImage(img, -img.width / 2, -img.height / 2);
@@ -89,7 +141,8 @@ function PhotoStudio() {
     const outW = mm2px(w), outH = mm2px(h);
     const c = document.createElement("canvas");
     c.width = outW; c.height = outH;
-    const ctx = c.getContext("2d")!;
+    const ctx = c.getContext("2d");
+    if (!ctx) return;
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, outW, outH);
     ctx.imageSmoothingQuality = "high";
@@ -106,7 +159,8 @@ function PhotoStudio() {
     const n = Math.min(copies, cols * rows);
     const s = document.createElement("canvas");
     s.width = sw; s.height = sh;
-    const sctx = s.getContext("2d")!;
+    const sctx = s.getContext("2d");
+    if (!sctx) return;
     sctx.fillStyle = "#ffffff";
     sctx.fillRect(0, 0, sw, sh);
     const gridW = cols * outW + (cols - 1) * g;
@@ -122,7 +176,7 @@ function PhotoStudio() {
   }, [src, area, rotation, w, h, bg, bright, contrast, sat, paper, gap, copies, border]);
 
   useEffect(() => {
-    const id = setTimeout(render, 250);
+    const id = setTimeout(() => { render().catch(() => toast.error("প্রিন্ট শিট তৈরি করা যায়নি")); }, 250);
     return () => clearTimeout(id);
   }, [render]);
 
@@ -140,8 +194,8 @@ function PhotoStudio() {
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader title="পাসপোর্ট ও এনআইডি ছবি" sub="ছবি আপলোড → ক্রপ → সমন্বয় → প্রিন্ট শিট (৩০০ DPI)">
-        <Button onClick={() => fileRef.current?.click()}><Upload className="mr-1 h-4 w-4" /> ছবি আপলোড</Button>
-        <input ref={fileRef} hidden type="file" accept="image/*" capture="environment" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
+        <Button disabled={!!busy} onClick={() => fileRef.current?.click()}><Upload className="mr-1 h-4 w-4" /> ছবি আপলোড</Button>
+        <input ref={fileRef} hidden type="file" accept="image/*" onChange={(e) => { if (e.target.files?.[0]) onFile(e.target.files[0]); e.target.value = ""; }} />
       </PageHeader>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -151,9 +205,9 @@ function PhotoStudio() {
               <Cropper image={src} crop={crop} zoom={zoom} rotation={rotation} aspect={w / h} onCropChange={setCrop} onZoomChange={setZoom} onCropComplete={(_, a) => setArea(a)} showGrid
                 style={{ mediaStyle: { filter: `brightness(${bright}%) contrast(${contrast}%) saturate(${sat}%)` } }} />
             ) : (
-              <button onClick={() => fileRef.current?.click()} className="grid h-full w-full place-items-center text-muted-foreground">
+              <Button variant="ghost" onClick={() => fileRef.current?.click()} className="grid h-full w-full place-items-center whitespace-normal text-muted-foreground">
                 <div className="text-center"><Upload className="mx-auto h-10 w-10" /><div className="mt-2">কম্পিউটার বা ফোন থেকে ছবি নির্বাচন করুন</div></div>
-              </button>
+              </Button>
             )}
           </div>
           {src && (
@@ -179,15 +233,42 @@ function PhotoStudio() {
                   <Button size="sm" onClick={() => print(sheet)}><Printer className="mr-1 h-4 w-4" /> প্রিন্ট</Button>
                 </div>
               </div>
-              <div className="flex items-start gap-4">
+              <div className="flex flex-wrap items-start gap-4">
                 {single && <img src={single} alt="single" className="w-28 border" />}
-                <img src={sheet} alt="sheet" className="max-h-[420px] border" />
+                <img src={sheet} alt="sheet" className="max-h-[420px] max-w-full border" />
               </div>
             </div>
           )}
         </div>
 
         <aside className="space-y-4 rounded-xl border bg-card p-4 shadow-card lg:sticky lg:top-6 lg:self-start">
+          <div className="space-y-3 border-b pb-4">
+            <h2 className="font-semibold">AI ছবি সম্পাদনা</h2>
+            <Button className="w-full" disabled={!src || !!busy || removed} onClick={() => editPhoto("remove")}>
+              {busy === "remove" ? <LoaderCircle className="animate-spin" /> : <Eraser />}
+              {removed ? "ব্যাকগ্রাউন্ড রিমুভ হয়েছে" : "ব্যাকগ্রাউন্ড রিমুভ"}
+            </Button>
+            <div className="flex gap-2">
+              <select aria-label="আপস্কেল মাত্রা" className="h-9 rounded-md border bg-card px-2" value={scale} disabled={!!busy} onChange={(e) => setScale(Number(e.target.value) as 2 | 4)}>
+                <option value={2}>২×</option><option value={4}>৪×</option>
+              </select>
+              <Button variant="outline" className="flex-1" disabled={!src || !!busy} onClick={() => editPhoto("upscale")}>
+                {busy === "upscale" ? <LoaderCircle className="animate-spin" /> : <Scan />} আপস্কেল
+              </Button>
+            </div>
+            {busy && <div role="status" className="space-y-1 text-sm text-muted-foreground">
+              <div>{progress < 90 && busy === "remove" ? "AI মডেল লোড হচ্ছে" : "ছবি সম্পাদনা হচ্ছে"} · {progress}%</div>
+              <progress aria-label="ছবি সম্পাদনার অগ্রগতি" max={100} value={progress} className="h-2 w-full accent-teal" />
+            </div>}
+            {error && <p role="alert" className="break-words text-xs text-destructive">{error}</p>}
+            {src && <>
+              <p className="text-xs text-muted-foreground" data-testid="photo-dimensions">{dimensions.w} × {dimensions.h} px{removed ? " · স্বচ্ছ ব্যাকগ্রাউন্ড" : ""}</p>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" disabled={!!busy} onClick={() => dl(src, "edited-photo.png")}><Download /> সম্পূর্ণ ছবি PNG</Button>
+                <Button size="icon" title="মূল ছবি ফিরিয়ে আনুন" aria-label="মূল ছবি ফিরিয়ে আনুন" variant="ghost" disabled={!!busy || src === original} onClick={() => { if (original) { replaceSource(original); setRemoved(false); setError(null); } }}><Undo2 /></Button>
+              </div>
+            </>}
+          </div>
           <div><Label>ছবির মাপ</Label>
             <select className="mt-1 h-10 w-full rounded-md border bg-card px-2" value={preset} onChange={(e) => setPreset(+e.target.value)}>
               {PRESETS.map((p, i) => <option key={p.n} value={i}>{p.n}</option>)}
@@ -211,7 +292,7 @@ function PhotoStudio() {
           </div>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={border} onChange={(e) => setBorder(e.target.checked)} /> কাটার দাগ (বর্ডার)</label>
           <div className="rounded-lg bg-accent p-3 text-xs text-accent-foreground">
-            ব্যাকগ্রাউন্ড অটো রিমুভ (AI) এখনো চালু করা হয়নি — এটি পরবর্তী ধাপে যুক্ত হবে। এখন ক্রপ করে ফাঁকা অংশের রঙ বদলাতে পারবেন।
+            AI আপনার ডিভাইসেই চলে; ছবি বাইরে পাঠানো হয় না। প্রথমবার মডেল ডাউনলোডে সময় লাগতে পারে। পাসপোর্টে ব্যবহারের আগে মুখ ও চুলের কিনারা যাচাই করুন।
           </div>
         </aside>
       </div>
