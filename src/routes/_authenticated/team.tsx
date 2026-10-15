@@ -8,7 +8,7 @@ import { useMe } from "@/hooks/use-session";
 import { audit } from "@/lib/queries";
 
 export const Route = createFileRoute("/_authenticated/team")({
-  head: () => ({ meta: [{ title: "স্টাফ ও সেটিংস — Fatima Digital" }] }),
+  head: () => ({ meta: [{"title": "স্টাফ ও সেটিংস — Fatima Digital"}, {"name": "description", "content": "দোকানের স্টাফ অনুমোদন ও কার্যকলাপ পর্যালোচনা।"}, {"property": "og:title", "content": "স্টাফ ও সেটিংস — Fatima Digital"}, {"property": "og:description", "content": "দোকানের স্টাফ অনুমোদন ও কার্যকলাপ পর্যালোচনা।"}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: Team,
 });
 

@@ -14,7 +14,7 @@ import { useMe } from "@/hooks/use-session";
 import { purgeExpired } from "@/lib/orders.functions";
 
 export const Route = createFileRoute("/_authenticated/orders")({
-  head: () => ({ meta: [{ title: "কাস্টমার অর্ডার — Fatima Digital" }] }),
+  head: () => ({ meta: [{"title": "কাস্টমার অর্ডার — Fatima Digital"}, {"name": "description", "content": "কাস্টমারের অর্ডার, ফাইল ও কাজের অবস্থা পরিচালনা।"}, {"property": "og:title", "content": "কাস্টমার অর্ডার — Fatima Digital"}, {"property": "og:description", "content": "কাস্টমারের অর্ডার, ফাইল ও কাজের অবস্থা পরিচালনা।"}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: Orders,
 });
 

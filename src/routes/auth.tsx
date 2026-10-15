@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "লগইন — Fatima Digital" },
       { name: "description", content: "Fatima Digital staff and owner sign in." },
       { property: "og:title", content: "লগইন — Fatima Digital" },

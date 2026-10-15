@@ -15,7 +15,7 @@ import { taka, sumMoney, todayISO, toCSV, downloadBlob } from "@/lib/format";
 import { useMe } from "@/hooks/use-session";
 
 export const Route = createFileRoute("/_authenticated/accounts")({
-  head: () => ({ meta: [{ title: "আয়-ব্যয় — Fatima Digital" }] }),
+  head: () => ({ meta: [{"title": "আয়-ব্যয় — Fatima Digital"}, {"name": "description", "content": "দোকানের আয়, খরচ, বকেয়া ও আর্থিক হিসাব।"}, {"property": "og:title", "content": "আয়-ব্যয় — Fatima Digital"}, {"property": "og:description", "content": "দোকানের আয়, খরচ, বকেয়া ও আর্থিক হিসাব।"}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: Accounts,
 });
 

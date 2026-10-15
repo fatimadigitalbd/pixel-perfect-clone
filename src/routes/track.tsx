@@ -10,6 +10,8 @@ export const Route = createFileRoute("/track")({
   validateSearch: (s: Record<string, unknown>) => ({ no: typeof s["no"] === "string" ? (s["no"] as string) : undefined }) as { no?: string },
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "অর্ডার ট্র্যাক — ফাতিমা ডিজিটাল" },
       { name: "description", content: "অর্ডার নম্বর দিয়ে আপনার কাজের অবস্থা দেখুন।" },
       { property: "og:title", content: "অর্ডার ট্র্যাক — ফাতিমা ডিজিটাল" },

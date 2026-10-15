@@ -7,7 +7,7 @@ import { txQuery, ordersQuery, jobsQuery } from "@/lib/queries";
 import { taka, sumMoney, todayISO } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "ড্যাশবোর্ড — Fatima Digital" }] }),
+  head: () => ({ meta: [{"title": "ড্যাশবোর্ড — Fatima Digital"}, {"name": "description", "content": "দোকানের দৈনিক হিসাব, অর্ডার ও চলমান কাজের সারসংক্ষেপ।"}, {"property": "og:title", "content": "ড্যাশবোর্ড — Fatima Digital"}, {"property": "og:description", "content": "দোকানের দৈনিক হিসাব, অর্ডার ও চলমান কাজের সারসংক্ষেপ।"}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
   component: Dashboard,
 });
 
