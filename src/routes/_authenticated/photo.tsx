@@ -2,7 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Cropper, { type Area } from "react-easy-crop";
 import { toast } from "sonner";
-import { Upload, Download, Printer, RotateCw, Eraser, Scan, Undo2, LoaderCircle } from "lucide-react";
+import { Upload, Download, RotateCw, Eraser, Scan, Undo2, LoaderCircle, ArrowRight, ImagePlus, Check } from "lucide-react";
+import { PhotoSheetComposer } from "@/components/PhotoSheetComposer";
+import { type SheetPhoto } from "@/lib/photo-layout";
 import { PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,11 +32,6 @@ const PRESETS = [
   { n: "আইডি ছবি 30×40 mm", w: 30, h: 40 },
   { n: "কাস্টম", w: 0, h: 0 },
 ];
-const PAPERS = [
-  { n: "4×6 inch (ফটো পেপার)", w: 101.6, h: 152.4 },
-  { n: "5×7 inch", w: 127, h: 177.8 },
-  { n: "A4", w: 210, h: 297 },
-];
 const DPI = 300;
 const mm2px = (mm: number) => Math.round((mm / 25.4) * DPI);
 
@@ -48,6 +45,9 @@ function loadImage(src: string) {
 }
 
 function PhotoStudio() {
+  const [step, setStep] = useState<1 | 2>(1);
+  const [photos, setPhotos] = useState<SheetPhoto[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [src, setSrc] = useState<string | null>(null);
   const [original, setOriginal] = useState<string | null>(null);
   const [busy, setBusy] = useState<"remove" | "upscale" | null>(null);
@@ -66,14 +66,9 @@ function PhotoStudio() {
   const [preset, setPreset] = useState(0);
   const [cw, setCw] = useState(40);
   const [ch, setCh] = useState(50);
-  const [paper, setPaper] = useState(0);
-  const [copies, setCopies] = useState(8);
-  const [gap, setGap] = useState(2);
-  const [border, setBorder] = useState(true);
   const [bg, setBg] = useState("#ffffff");
   const [area, setArea] = useState<Area | null>(null);
   const [single, setSingle] = useState<string | null>(null);
-  const [sheet, setSheet] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const w = PRESETS[preset].w || cw;
@@ -85,6 +80,7 @@ function PhotoStudio() {
     const r = new FileReader();
     r.onload = () => {
       const data = r.result as string;
+      setEditingId(null); setBright(100); setContrast(100); setSat(100);
       setOriginal(data); setRemoved(false); setError(null);
       replaceSource(data);
     };
@@ -93,7 +89,7 @@ function PhotoStudio() {
 
   function replaceSource(data: string) {
     renderVersion.current += 1;
-    setArea(null); setSingle(null); setSheet(null);
+    setArea(null); setSingle(null);
     setSrc(data); setCrop({ x: 0, y: 0 }); setZoom(1); setRotation(0);
     loadImage(data).then((image) => setDimensions({ w: image.width, h: image.height }));
   }
@@ -151,31 +147,10 @@ function PhotoStudio() {
     const one = c.toDataURL("image/jpeg", 0.95);
     setSingle(one);
 
-    // sheet
-    const P = PAPERS[paper];
-    const sw = mm2px(P.w), sh = mm2px(P.h), g = mm2px(gap), m = mm2px(4);
-    const cols = Math.max(1, Math.floor((sw - 2 * m + g) / (outW + g)));
-    const rows = Math.max(1, Math.floor((sh - 2 * m + g) / (outH + g)));
-    const n = Math.min(copies, cols * rows);
-    const s = document.createElement("canvas");
-    s.width = sw; s.height = sh;
-    const sctx = s.getContext("2d");
-    if (!sctx) return;
-    sctx.fillStyle = "#ffffff";
-    sctx.fillRect(0, 0, sw, sh);
-    const gridW = cols * outW + (cols - 1) * g;
-    const ox = Math.round((sw - gridW) / 2);
-    for (let i = 0; i < n; i++) {
-      const x = ox + (i % cols) * (outW + g);
-      const y = m + Math.floor(i / cols) * (outH + g);
-      sctx.drawImage(c, x, y);
-      if (border) { sctx.strokeStyle = "#bbbbbb"; sctx.lineWidth = 2; sctx.strokeRect(x, y, outW, outH); }
-    }
-    setSheet(s.toDataURL("image/jpeg", 0.95));
-    if (copies > cols * rows) toast.info(`এই কাগজে সর্বোচ্চ ${cols * rows} কপি ধরে`);
-  }, [src, area, rotation, w, h, bg, bright, contrast, sat, paper, gap, copies, border]);
+  }, [src, area, rotation, w, h, bg, bright, contrast, sat]);
 
   useEffect(() => {
+    setSingle(null);
     const id = setTimeout(() => { render().catch(() => toast.error("প্রিন্ট শিট তৈরি করা যায়নি")); }, 250);
     return () => clearTimeout(id);
   }, [render]);
@@ -183,22 +158,33 @@ function PhotoStudio() {
   function dl(data: string, name: string) {
     fetch(data).then((r) => r.blob()).then((b) => downloadBlob(b, name));
   }
-  function print(data: string) {
-    const P = PAPERS[paper];
-    const win = window.open("", "_blank");
-    if (!win) return toast.error("পপ-আপ চালু করুন");
-    win.document.write(`<html><head><style>@page{size:${P.w}mm ${P.h}mm;margin:0}body{margin:0}img{width:${P.w}mm;height:${P.h}mm;display:block}</style></head><body><img src="${data}" onload="setTimeout(()=>{print()},200)"></body></html>`);
-    win.document.close();
+  function commitPhoto() {
+    if (!single || busy) return false;
+    const id = editingId ?? crypto.randomUUID();
+    const previous = photos.find(photo => photo.id === id);
+    const photo: SheetPhoto = { id, image: single, width: w, height: h, passport: previous?.passport ?? 5, stamp: previous?.stamp ?? 0, rotated: previous?.rotated ?? false };
+    setPhotos(current => previous ? current.map(item => item.id === id ? photo : item) : [...current, photo]);
+    setEditingId(id);
+    return true;
+  }
+  function selectPhoto(photo: SheetPhoto) {
+    setStep(1); setEditingId(photo.id); setOriginal(photo.image); setRemoved(false); setError(null);
+    setBright(100); setContrast(100); setSat(100);
+    setPreset(5); setCw(photo.width); setCh(photo.height);
+    replaceSource(photo.image);
   }
 
   return (
     <div className="mx-auto max-w-6xl">
-      <PageHeader title="পাসপোর্ট ও এনআইডি ছবি" sub="ছবি আপলোড → ক্রপ → সমন্বয় → প্রিন্ট শিট (৩০০ DPI)">
-        <Button disabled={!!busy} onClick={() => fileRef.current?.click()}><Upload className="mr-1 h-4 w-4" /> ছবি আপলোড</Button>
+      <PageHeader title="পাসপোর্ট ও এনআইডি ছবি" sub={step === 1 ? "ছবি সম্পাদনা" : "প্রিন্ট শিট"}>
+        {step === 1 && <Button disabled={!!busy} onClick={() => fileRef.current?.click()}><Upload className="mr-1 h-4 w-4" /> ছবি আপলোড</Button>}
         <input ref={fileRef} hidden type="file" accept="image/*" onChange={(e) => { if (e.target.files?.[0]) onFile(e.target.files[0]); e.target.value = ""; }} />
       </PageHeader>
-
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      <nav aria-label="ছবি তৈরির ধাপ" className="mb-5 flex gap-2 border-b pb-4">
+        <Button variant={step === 1 ? "default" : "outline"} disabled={!!busy} onClick={() => setStep(1)} aria-current={step === 1 ? "step" : undefined}>১ · ছবি সম্পাদনা</Button>
+        <Button variant={step === 2 ? "default" : "outline"} disabled={!!busy || (!single && photos.length === 0)} onClick={() => { if (step === 1 && single) commitPhoto(); setStep(2); }} aria-current={step === 2 ? "step" : undefined}>২ · প্রিন্ট শিট <ArrowRight /></Button>
+      </nav>
+      {step === 2 ? <PhotoSheetComposer photos={photos} onChange={setPhotos} onBack={() => setStep(1)} onEdit={selectPhoto} /> : <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="space-y-4">
           <div className="relative h-[420px] overflow-hidden rounded-xl border bg-muted">
             {src ? (
@@ -223,25 +209,19 @@ function PhotoStudio() {
               <Ctl l="ফাঁকা অংশের রঙ"><div className="flex gap-2">{["#ffffff", "#dbe9f7", "#2563eb", "#e5e7eb"].map((c) => <button key={c} aria-label={c} onClick={() => setBg(c)} className={`h-8 w-8 rounded border-2 ${bg === c ? "border-teal" : "border-border"}`} style={{ background: c }} />)}<input type="color" value={bg} onChange={(e) => setBg(e.target.value)} className="h-8 w-10" /></div></Ctl>
             </div>
           )}
-          {sheet && (
-            <div className="rounded-xl border bg-card p-4 shadow-card">
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <h3 className="font-semibold">প্রিভিউ</h3>
-                <div className="flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline" onClick={() => single && dl(single, `photo-${w}x${h}mm.jpg`)}><Download className="mr-1 h-4 w-4" /> একক ছবি</Button>
-                  <Button size="sm" variant="outline" onClick={() => dl(sheet, `print-sheet.jpg`)}><Download className="mr-1 h-4 w-4" /> শিট</Button>
-                  <Button size="sm" onClick={() => print(sheet)}><Printer className="mr-1 h-4 w-4" /> প্রিন্ট</Button>
-                </div>
-              </div>
-              <div className="flex flex-wrap items-start gap-4">
-                {single && <img src={single} alt="single" className="w-28 border" />}
-                <img src={sheet} alt="sheet" className="max-h-[420px] max-w-full border" />
-              </div>
-            </div>
-          )}
+          {src && <div className="flex flex-wrap items-center gap-3 border-t pt-4">
+            {single && <img src={single} alt="সম্পাদিত ছবি" className="h-24 w-20 object-contain" />}
+            <Button variant="outline" disabled={!single || !!busy} onClick={() => single && dl(single, `photo-${w}x${h}mm.jpg`)}><Download /> একক ছবি</Button>
+            <Button variant="outline" disabled={!single || !!busy} onClick={() => { if (commitPhoto()) toast.success("ছবি ট্রেতে রাখা হয়েছে"); }}><ImagePlus /> {editingId ? "ট্রের ছবি আপডেট" : "ট্রেতে যোগ করুন"}</Button>
+            <Button disabled={!single || !!busy} onClick={() => { if (commitPhoto()) setStep(2); }}>প্রিন্ট শিট তৈরি <ArrowRight /></Button>
+          </div>}
         </div>
 
         <aside className="space-y-4 rounded-xl border bg-card p-4 shadow-card lg:sticky lg:top-6 lg:self-start">
+          <section className="space-y-2 border-b pb-4"><h2 className="font-semibold">ছবির ট্রে <span className="text-sm text-muted-foreground">({photos.length})</span></h2><div className="flex flex-wrap gap-2">
+            <Button size="icon" variant="outline" disabled={!!busy} aria-label="আরও ছবি আপলোড" onClick={() => fileRef.current?.click()} className="h-20 w-14"><Upload /></Button>
+            {photos.map((photo, index) => <Button key={photo.id} variant={editingId === photo.id ? "secondary" : "ghost"} className="relative h-20 w-14 p-1" disabled={!!busy} aria-label={`ট্রের ছবি ${index + 1} সম্পাদনা`} onClick={() => selectPhoto(photo)}><img src={photo.image} alt={`ট্রের ছবি ${index + 1}`} className="h-full w-full object-contain" />{editingId === photo.id && <Check className="absolute bottom-0 right-0 rounded bg-teal text-teal-foreground" />}</Button>)}
+          </div></section>
           <div className="space-y-3 border-b pb-4">
             <h2 className="font-semibold">AI ছবি সম্পাদনা</h2>
             <Button className="w-full" disabled={!src || !!busy || removed} onClick={() => editPhoto("remove")}>
@@ -281,21 +261,11 @@ function PhotoStudio() {
             </div>
           )}
           <p className="text-xs text-muted-foreground">দপ্তরভেদে মাপ ভিন্ন হতে পারে — আবেদনের আগে অফিসিয়াল নির্দেশনা দেখে নিন।</p>
-          <div><Label>কাগজ</Label>
-            <select className="mt-1 h-10 w-full rounded-md border bg-card px-2" value={paper} onChange={(e) => setPaper(+e.target.value)}>
-              {PAPERS.map((p, i) => <option key={p.n} value={i}>{p.n}</option>)}
-            </select>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div><Label>কপি</Label><Input type="number" min={1} max={60} value={copies} onChange={(e) => setCopies(Math.max(1, +e.target.value))} /></div>
-            <div><Label>ফাঁক (mm)</Label><Input type="number" min={0} max={10} value={gap} onChange={(e) => setGap(Math.max(0, +e.target.value))} /></div>
-          </div>
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={border} onChange={(e) => setBorder(e.target.checked)} /> কাটার দাগ (বর্ডার)</label>
           <div className="rounded-lg bg-accent p-3 text-xs text-accent-foreground">
             AI আপনার ডিভাইসেই চলে; ছবি বাইরে পাঠানো হয় না। প্রথমবার মডেল ডাউনলোডে সময় লাগতে পারে। পাসপোর্টে ব্যবহারের আগে মুখ ও চুলের কিনারা যাচাই করুন।
           </div>
         </aside>
-      </div>
+      </div>}
     </div>
   );
 }

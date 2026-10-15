@@ -13,3 +13,4 @@
 - Customer uploads go through server functions (`src/lib/orders.functions.ts`) into the private `customer-files` bucket; staff download via short signed URLs — files are never public.
 - Photo/card/document tools render client-side (canvas at 300 DPI, browser print for Bangla PDF) — avoids paid services and Bangla font issues in PDF libraries.
 - Photo AI uses dynamically imported browser-only MODNet matting and ESRGAN super-resolution with preserved alpha; no generative image edits or customer-image upload — protects portrait identity, privacy, and avoids commercial-only licenses.
+- Photo preparation keeps a session-local edited-photo tray and a separate sheet composer using pure millimetre layout geometry — preserves privacy and keeps mixed-copy print placement testable.
