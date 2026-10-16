@@ -47,6 +47,7 @@ function loadImage(src: string) {
 function PhotoStudio() {
   const [step, setStep] = useState<1 | 2>(1);
   const [photos, setPhotos] = useState<SheetPhoto[]>([]);
+  const [importing, setImporting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [src, setSrc] = useState<string | null>(null);
   const [original, setOriginal] = useState<string | null>(null);
@@ -74,17 +75,51 @@ function PhotoStudio() {
   const w = PRESETS[preset].w || cw;
   const h = PRESETS[preset].h || ch;
 
-  function onFile(f: File) {
-    if (!f.type.startsWith("image/")) return toast.error("শুধু ছবি ফাইল (JPG/PNG/WEBP) দিন");
-    if (f.size > 25 * 1024 * 1024) return toast.error("ছবি ২৫MB এর কম হতে হবে");
-    const r = new FileReader();
-    r.onload = () => {
-      const data = r.result as string;
-      setEditingId(null); setBright(100); setContrast(100); setSat(100);
-      setOriginal(data); setRemoved(false); setError(null);
-      replaceSource(data);
-    };
-    r.readAsDataURL(f);
+  async function onFiles(files: File[]) {
+    if (busy || importing) return;
+    setImporting(true);
+    const imported: { photo: SheetPhoto; source: string }[] = [];
+    try {
+      for (const file of files) {
+        if (!file.type.startsWith("image/") || file.size > 25 * 1024 * 1024) {
+          toast.error(`${file.name}: JPG/PNG/WEBP ছবি দিন, সর্বোচ্চ ২৫MB`);
+          continue;
+        }
+        try {
+          const source = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result));
+            reader.onerror = () => reject(new Error("ছবি পড়া যায়নি"));
+            reader.readAsDataURL(file);
+          });
+          const image = await loadImage(source);
+          const canvas = document.createElement("canvas");
+          canvas.width = mm2px(w); canvas.height = mm2px(h);
+          const ctx = canvas.getContext("2d");
+          if (!ctx) throw new Error("ছবি তৈরি করা যায়নি");
+          const ratio = Math.max(canvas.width / image.width, canvas.height / image.height);
+          ctx.fillStyle = bg;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.imageSmoothingQuality = "high";
+          ctx.drawImage(image, (canvas.width - image.width * ratio) / 2, (canvas.height - image.height * ratio) / 2, image.width * ratio, image.height * ratio);
+          imported.push({ source, photo: { id: crypto.randomUUID(), image: canvas.toDataURL("image/jpeg", 0.95), width: w, height: h, passport: 5, stamp: 0, rotated: false } });
+        } catch {
+          toast.error(`${file.name}: ছবি পড়া যায়নি`);
+        }
+      }
+      const first = imported[0];
+      if (!first) return;
+      // Keep the current edited portrait before opening a newly imported one.
+      if (single) commitPhoto();
+      setPhotos(current => [...current, ...imported.map(item => item.photo)]);
+      setStep(1); setEditingId(first.photo.id);
+      setBright(100); setContrast(100); setSat(100);
+      setOriginal(first.source); setRemoved(false); setError(null);
+      replaceSource(first.source);
+      toast.success(`${imported.length}টি ছবি ট্রেতে যোগ হয়েছে`);
+    } finally {
+      setImporting(false);
+    }
   }
 
   function replaceSource(data: string) {
@@ -177,12 +212,12 @@ function PhotoStudio() {
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader title="পাসপোর্ট ও এনআইডি ছবি" sub={step === 1 ? "ছবি সম্পাদনা" : "প্রিন্ট শিট"}>
-        {step === 1 && <Button disabled={!!busy} onClick={() => fileRef.current?.click()}><Upload className="mr-1 h-4 w-4" /> ছবি আপলোড</Button>}
-        <input ref={fileRef} hidden type="file" accept="image/*" onChange={(e) => { if (e.target.files?.[0]) onFile(e.target.files[0]); e.target.value = ""; }} />
+        <Button disabled={!!busy || importing} onClick={() => fileRef.current?.click()}>{importing ? <LoaderCircle className="animate-spin" /> : <Upload className="mr-1 h-4 w-4" />} {importing ? "ছবি যোগ হচ্ছে" : "ছবি আপলোড"}</Button>
+        <input ref={fileRef} hidden type="file" accept="image/*" multiple onChange={(e) => { const files = Array.from(e.target.files ?? []); e.target.value = ""; void onFiles(files); }} />
       </PageHeader>
       <nav aria-label="ছবি তৈরির ধাপ" className="mb-5 flex gap-2 border-b pb-4">
-        <Button variant={step === 1 ? "default" : "outline"} disabled={!!busy} onClick={() => setStep(1)} aria-current={step === 1 ? "step" : undefined}>১ · ছবি সম্পাদনা</Button>
-        <Button variant={step === 2 ? "default" : "outline"} disabled={!!busy || (!single && photos.length === 0)} onClick={() => { if (step === 1 && single) commitPhoto(); setStep(2); }} aria-current={step === 2 ? "step" : undefined}>২ · প্রিন্ট শিট <ArrowRight /></Button>
+        <Button variant={step === 1 ? "default" : "outline"} disabled={!!busy || importing} onClick={() => setStep(1)} aria-current={step === 1 ? "step" : undefined}>১ · ছবি সম্পাদনা</Button>
+        <Button variant={step === 2 ? "default" : "outline"} disabled={!!busy || importing || (!single && photos.length === 0)} onClick={() => { if (step === 1 && single) commitPhoto(); setStep(2); }} aria-current={step === 2 ? "step" : undefined}>২ · প্রিন্ট শিট <ArrowRight /></Button>
       </nav>
       {step === 2 ? <PhotoSheetComposer photos={photos} onChange={setPhotos} onBack={() => setStep(1)} onEdit={selectPhoto} /> : <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="space-y-4">
@@ -191,7 +226,7 @@ function PhotoStudio() {
               <Cropper image={src} crop={crop} zoom={zoom} rotation={rotation} aspect={w / h} onCropChange={setCrop} onZoomChange={setZoom} onCropComplete={(_, a) => setArea(a)} showGrid
                 style={{ mediaStyle: { filter: `brightness(${bright}%) contrast(${contrast}%) saturate(${sat}%)` } }} />
             ) : (
-              <Button variant="ghost" onClick={() => fileRef.current?.click()} className="grid h-full w-full place-items-center whitespace-normal text-muted-foreground">
+              <Button variant="ghost" disabled={importing} onClick={() => fileRef.current?.click()} className="grid h-full w-full place-items-center whitespace-normal text-muted-foreground">
                 <div className="text-center"><Upload className="mx-auto h-10 w-10" /><div className="mt-2">কম্পিউটার বা ফোন থেকে ছবি নির্বাচন করুন</div></div>
               </Button>
             )}
@@ -219,8 +254,8 @@ function PhotoStudio() {
 
         <aside className="space-y-4 rounded-xl border bg-card p-4 shadow-card lg:sticky lg:top-6 lg:self-start">
           <section className="space-y-2 border-b pb-4"><h2 className="font-semibold">ছবির ট্রে <span className="text-sm text-muted-foreground">({photos.length})</span></h2><div className="flex flex-wrap gap-2">
-            <Button size="icon" variant="outline" disabled={!!busy} aria-label="আরও ছবি আপলোড" onClick={() => fileRef.current?.click()} className="h-20 w-14"><Upload /></Button>
-            {photos.map((photo, index) => <Button key={photo.id} variant={editingId === photo.id ? "secondary" : "ghost"} className="relative h-20 w-14 p-1" disabled={!!busy} aria-label={`ট্রের ছবি ${index + 1} সম্পাদনা`} onClick={() => selectPhoto(photo)}><img src={photo.image} alt={`ট্রের ছবি ${index + 1}`} className="h-full w-full object-contain" />{editingId === photo.id && <Check className="absolute bottom-0 right-0 rounded bg-teal text-teal-foreground" />}</Button>)}
+            <Button size="icon" variant="outline" disabled={!!busy || importing} aria-label="আরও ছবি আপলোড" onClick={() => fileRef.current?.click()} className="h-20 w-14"><Upload /></Button>
+            {photos.map((photo, index) => <Button key={photo.id} variant={editingId === photo.id ? "secondary" : "ghost"} className="relative h-20 w-14 p-1" disabled={!!busy || importing} aria-label={`ট্রের ছবি ${index + 1} সম্পাদনা`} onClick={() => { if (single) commitPhoto(); selectPhoto(photo); }}><img src={photo.image} alt={`ট্রের ছবি ${index + 1}`} className="h-full w-full object-contain" />{editingId === photo.id && <Check className="absolute bottom-0 right-0 rounded bg-teal text-teal-foreground" />}</Button>)}
           </div></section>
           <div className="space-y-3 border-b pb-4">
             <h2 className="font-semibold">AI ছবি সম্পাদনা</h2>
