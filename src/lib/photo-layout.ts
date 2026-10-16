@@ -19,18 +19,25 @@ export function layoutPhotos(photos: SheetPhoto[], settings: SheetSettings) {
   }
   for (const photo of photos) {
     for (const kind of ['passport', 'stamp'] as const) {
-      for (let i = 0; i < photo[kind]; i++) {
+      for (let i = 0; i < photo[kind];) {
         const baseW = kind === 'stamp' ? 20 : photo.width;
         const baseH = kind === 'stamp' ? 25 : photo.height;
         const width = photo.rotated ? baseH : baseW;
         const height = photo.rotated ? baseW : baseH;
-        if (width > available || height > settings.height - settings.top * 2) { omitted++; continue; }
+        // Stamp copies fill each column top-to-bottom before starting the next.
+        const copies = kind === 'stamp' && photo[kind] - i >= 2 && height * 2 + settings.gap <= settings.height - settings.top * 2 ? 2 : 1;
+        i += copies;
+        const columnHeight = height * copies + settings.gap * (copies - 1);
+        if (width > available || columnHeight > settings.height - settings.top * 2) { omitted += copies; continue; }
         const extra = row.length ? settings.gap : 0;
-        if (row.length && (row.length >= settings.perRow || used + extra + width > available)) flush();
-        if (y + height > settings.height - settings.top) { omitted++; continue; }
+        const columns = new Set(row.map(item => item.x)).size;
+        if (row.length && (columns >= settings.perRow || used + extra + width > available)) flush();
+        if (y + columnHeight > settings.height - settings.top) { omitted += copies; continue; }
         const x = used + (row.length ? settings.gap : 0);
-        row.push({ id: photo.id, x, y, width, height, rotated: photo.rotated });
-        used = x + width; rowHeight = Math.max(rowHeight, height);
+        for (let copy = 0; copy < copies; copy++) {
+          row.push({ id: photo.id, x, y: y + copy * (height + settings.gap), width, height, rotated: photo.rotated });
+        }
+        used = x + width; rowHeight = Math.max(rowHeight, columnHeight);
       }
     }
     // Keep each customer's copies together in their own rows.

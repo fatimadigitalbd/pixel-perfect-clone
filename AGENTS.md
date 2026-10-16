@@ -14,3 +14,4 @@
 - Photo/card/document tools render client-side (canvas at 300 DPI, browser print for Bangla PDF) — avoids paid services and Bangla font issues in PDF libraries.
 - Photo AI uses dynamically imported browser-only MODNet matting and ESRGAN super-resolution with preserved alpha; no generative image edits or customer-image upload — protects portrait identity, privacy, and avoids commercial-only licenses.
 - Photo preparation keeps a session-local photo tray, imports every selected file as a print-ready portrait, and uses a separate sheet composer with pure millimetre layout geometry — preserves privacy and prevents new uploads replacing previous portraits.
+- Print layout packs stamp copies in two-copy vertical columns and counts columns for the per-row limit — fills space alongside larger portraits without overlapping copies.
