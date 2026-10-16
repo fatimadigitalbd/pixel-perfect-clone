@@ -20,4 +20,19 @@ describe('photo sheet layout', () => {
     const result = layoutPhotos([{ ...photo, passport: 2, stamp: 0 }], { ...settings, center: true, perRow: 1 });
     expect(result.placements[0].x).toBe(85); expect(result.placements[1].y).toBe(56);
   });
+  it('stacks stamp copies top-to-bottom alongside passport photos', () => {
+    const result = layoutPhotos([{ ...photo, passport: 4, stamp: 4 }], settings);
+    expect(result.omitted).toBe(0);
+    const stamps = result.placements.slice(4);
+    expect(stamps.map(p => [p.x, p.y])).toEqual([[172, 4], [172, 31], [4, 58], [4, 85]]);
+  });
+  it('counts a stamp pair as one column and leaves an odd copy on top', () => {
+    const result = layoutPhotos([{ ...photo, passport: 0, stamp: 5 }], { ...settings, perRow: 2 });
+    expect(result.placements.map(p => [p.x, p.y])).toEqual([[4, 4], [4, 31], [26, 4], [26, 31], [4, 58]]);
+    expect(result.omitted).toBe(0);
+  });
+  it('stacks rotated stamp copies without overlapping or leaving the page', () => {
+    const result = layoutPhotos([{ ...photo, passport: 0, stamp: 5, rotated: true }], { ...settings, center: true, perRow: 2 });
+    expect(result.placements.map(p => [p.x, p.y, p.width, p.height])).toEqual([[79, 4, 25, 20], [79, 26, 25, 20], [106, 4, 25, 20], [106, 26, 25, 20], [92.5, 48, 25, 20]]);
+  });
 });

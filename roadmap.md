@@ -5,3 +5,4 @@
 - [x] Separate photo editing and multi-photo print layout into two steps.
 - [x] Verify mixed passport/stamp copies, navigation, downloads, and small-screen layout.
 - [x] Fix batch photo uploads and verify all selected photos appear on the print sheet.
+- [ ] Stack stamp copies in vertical pairs and verify mixed-photo print placement.
