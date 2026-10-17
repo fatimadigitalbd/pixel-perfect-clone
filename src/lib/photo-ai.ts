@@ -1,5 +1,5 @@
 // Loaded only from photo-tool event handlers; never import AI runtimes during SSR.
-type Segmenter = Awaited<ReturnType<typeof import('@huggingface/transformers')['pipeline']>>;
+type Segmenter = import('@huggingface/transformers').BackgroundRemovalPipeline;
 let segmenterPromise: Promise<Segmenter> | undefined;
 let reportProgress: (value: number) => void = () => {};
 
@@ -35,7 +35,8 @@ function imageFrom(src: string) {
   });
 }
 
-const upscalers = new Map<number, Promise<import('upscaler').default>>();
+type UpscalerInstance = InstanceType<typeof import('upscaler')['default']>;
+const upscalers = new Map<number, Promise<UpscalerInstance>>();
 export async function upscalePhoto(src: string, scale: 2 | 4, progress: (value: number) => void, mode: 'fast' | 'ai' = 'ai') {
   const image = await imageFrom(src);
   if (image.width * image.height * scale * scale > 16_000_000 || Math.max(image.width, image.height) * scale > 8192) {
