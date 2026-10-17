@@ -21,6 +21,7 @@ import { Route as AuthenticatedDocumentsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/jobs'
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedPhotoRouteImport } from './routes/_authenticated/photo'
+import { Route as AuthenticatedScanRouteImport } from './routes/_authenticated/scan'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
 
 const IndexRoute = IndexRouteImport.update({
@@ -82,6 +83,11 @@ const AuthenticatedPhotoRoute = AuthenticatedPhotoRouteImport.update({
   path: '/photo',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedScanRoute = AuthenticatedScanRouteImport.update({
+  id: '/scan',
+  path: '/scan',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
   id: '/team',
   path: '/team',
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/jobs': typeof AuthenticatedJobsRoute
   '/orders': typeof AuthenticatedOrdersRoute
   '/photo': typeof AuthenticatedPhotoRoute
+  '/scan': typeof AuthenticatedScanRoute
   '/team': typeof AuthenticatedTeamRoute
 }
 export interface FileRoutesByTo {
@@ -114,6 +121,7 @@ export interface FileRoutesByTo {
   '/jobs': typeof AuthenticatedJobsRoute
   '/orders': typeof AuthenticatedOrdersRoute
   '/photo': typeof AuthenticatedPhotoRoute
+  '/scan': typeof AuthenticatedScanRoute
   '/team': typeof AuthenticatedTeamRoute
 }
 export interface FileRoutesById {
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   '/_authenticated/jobs': typeof AuthenticatedJobsRoute
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
   '/_authenticated/photo': typeof AuthenticatedPhotoRoute
+  '/_authenticated/scan': typeof AuthenticatedScanRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
 }
 export interface FileRouteTypes {
@@ -146,6 +155,7 @@ export interface FileRouteTypes {
     | '/jobs'
     | '/orders'
     | '/photo'
+    | '/scan'
     | '/team'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/jobs'
     | '/orders'
     | '/photo'
+    | '/scan'
     | '/team'
   id:
     | '__root__'
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/_authenticated/jobs'
     | '/_authenticated/orders'
     | '/_authenticated/photo'
+    | '/_authenticated/scan'
     | '/_authenticated/team'
   fileRoutesById: FileRoutesById
 }
@@ -272,6 +284,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPhotoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/scan': {
+      id: '/_authenticated/scan'
+      path: '/scan'
+      fullPath: '/scan'
+      preLoaderRoute: typeof AuthenticatedScanRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/team': {
       id: '/_authenticated/team'
       path: '/team'
@@ -290,6 +309,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedJobsRoute: typeof AuthenticatedJobsRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
   AuthenticatedPhotoRoute: typeof AuthenticatedPhotoRoute
+  AuthenticatedScanRoute: typeof AuthenticatedScanRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
 }
 
@@ -301,6 +321,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedJobsRoute: AuthenticatedJobsRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
   AuthenticatedPhotoRoute: AuthenticatedPhotoRoute,
+  AuthenticatedScanRoute: AuthenticatedScanRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
 }
 
