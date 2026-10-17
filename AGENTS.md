@@ -15,3 +15,6 @@
 - Photo AI uses dynamically imported browser-only MODNet matting and ESRGAN super-resolution with preserved alpha; no generative image edits or customer-image upload — protects portrait identity, privacy, and avoids commercial-only licenses.
 - Photo preparation keeps a session-local photo tray, imports every selected file as a print-ready portrait, and uses a separate sheet composer with pure millimetre layout geometry — preserves privacy and prevents new uploads replacing previous portraits.
 - Print layout packs stamp copies in two-copy vertical columns and counts columns for the per-row limit — fills space alongside larger portraits without overlapping copies.
+- Portrait AI sessions and upscale models are cached in browser-only modules, with an explicitly labeled non-AI resize mode — avoids repeated initialization without claiming invented detail.
+- Scan images stay session-local; dynamic OpenCV and jscanify provide automatic corner detection and validated manual perspective correction — personal documents never leave the browser.
+- Scanner card printing uses configurable physical dimensions on a 300-DPI A4 canvas — accommodates card formats without assuming all national IDs have the same size.

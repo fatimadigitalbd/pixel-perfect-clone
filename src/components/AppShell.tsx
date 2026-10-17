@@ -2,7 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import {
-  LayoutDashboard, Wallet, Camera, FileText, IdCard, Inbox, Briefcase, Users, LogOut, Menu, X, Languages,
+  LayoutDashboard, Wallet, Camera, FileText, IdCard, Inbox, Briefcase, Users, LogOut, Menu, X, Languages, FileScan,
 } from "lucide-react";
 import { Brand } from "./Brand";
 import { useI18n, type Key } from "@/lib/i18n";
@@ -13,6 +13,7 @@ const nav: { to: string; k: Key; i: typeof Wallet }[] = [
   { to: "/dashboard", k: "dashboard", i: LayoutDashboard },
   { to: "/accounts", k: "accounts", i: Wallet },
   { to: "/photo", k: "photo", i: Camera },
+  { to: "/scan", k: "scan", i: FileScan },
   { to: "/documents", k: "documents", i: FileText },
   { to: "/cards", k: "cards", i: IdCard },
   { to: "/orders", k: "orders", i: Inbox },
