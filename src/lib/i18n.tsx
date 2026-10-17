@@ -6,6 +6,7 @@ const dict = {
   dashboard: ["ড্যাশবোর্ড", "Dashboard"],
   accounts: ["আয়-ব্যয়", "Income & Expense"],
   photo: ["পাসপোর্ট ছবি", "Passport Photo"],
+  scan: ["ডকুমেন্ট ও আইডি স্ক্যান", "Document & ID Scan"],
   documents: ["বাংলা ডকুমেন্ট", "Bangla Documents"],
   cards: ["কার্ড ডিজাইনার", "Card Designer"],
   orders: ["কাস্টমার অর্ডার", "Customer Orders"],

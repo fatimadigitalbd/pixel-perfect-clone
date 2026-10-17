@@ -1,8 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Cropper, { type Area } from "react-easy-crop";
 import { toast } from "sonner";
-import { Upload, Download, RotateCw, Eraser, Scan, Undo2, LoaderCircle, ArrowRight, ImagePlus, Check } from "lucide-react";
+import { Upload, Download, RotateCw, Eraser, Scan, Undo2, LoaderCircle, ArrowRight, ImagePlus, Check, Crop, FileScan } from "lucide-react";
+import { PhotoCropDialog } from '@/components/PhotoCropDialog';
+import { neutralRetouch, retouchCanvas } from '@/lib/photo-retouch';
 import { PhotoSheetComposer } from "@/components/PhotoSheetComposer";
 import { type SheetPhoto } from "@/lib/photo-layout";
 import { PageHeader } from "@/components/AppShell";
@@ -46,6 +48,9 @@ function loadImage(src: string) {
 
 function PhotoStudio() {
   const [step, setStep] = useState<1 | 2>(1);
+  const [cropOpen, setCropOpen] = useState(false);
+  const [retouch, setRetouch] = useState(neutralRetouch);
+  const [upscaleMode, setUpscaleMode] = useState<'fast' | 'ai'>('fast');
   const [photos, setPhotos] = useState<SheetPhoto[]>([]);
   const [importing, setImporting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -114,6 +119,7 @@ function PhotoStudio() {
       setPhotos(current => [...current, ...imported.map(item => item.photo)]);
       setStep(1); setEditingId(first.photo.id);
       setBright(100); setContrast(100); setSat(100);
+      setRetouch(neutralRetouch);
       setOriginal(first.source); setRemoved(false); setError(null);
       replaceSource(first.source);
       toast.success(`${imported.length}টি ছবি ট্রেতে যোগ হয়েছে`);
@@ -136,7 +142,7 @@ function PhotoStudio() {
       const tools = await import("@/lib/photo-ai");
       const blob = action === "remove"
         ? await tools.removePhotoBackground(src, setProgress)
-        : await tools.upscalePhoto(src, scale, setProgress);
+        : await tools.upscalePhoto(src, scale, setProgress, upscaleMode);
       const data = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(String(reader.result));
@@ -179,10 +185,11 @@ function PhotoStudio() {
     ctx.imageSmoothingQuality = "high";
     ctx.filter = `brightness(${bright}%) contrast(${contrast}%) saturate(${sat}%)`;
     ctx.drawImage(rc, area.x, area.y, area.width, area.height, 0, 0, outW, outH);
+    retouchCanvas(c, retouch);
     const one = c.toDataURL("image/jpeg", 0.95);
     setSingle(one);
 
-  }, [src, area, rotation, w, h, bg, bright, contrast, sat]);
+  }, [src, area, rotation, w, h, bg, bright, contrast, sat, retouch]);
 
   useEffect(() => {
     setSingle(null);
@@ -205,6 +212,7 @@ function PhotoStudio() {
   function selectPhoto(photo: SheetPhoto) {
     setStep(1); setEditingId(photo.id); setOriginal(photo.image); setRemoved(false); setError(null);
     setBright(100); setContrast(100); setSat(100);
+    setRetouch(neutralRetouch);
     setPreset(5); setCw(photo.width); setCh(photo.height);
     replaceSource(photo.image);
   }
@@ -212,6 +220,7 @@ function PhotoStudio() {
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader title="পাসপোর্ট ও এনআইডি ছবি" sub={step === 1 ? "ছবি সম্পাদনা" : "প্রিন্ট শিট"}>
+        <Button asChild variant="outline"><Link to="/scan"><FileScan /> ডকুমেন্ট / আইডি স্ক্যান</Link></Button>
         <Button disabled={!!busy || importing} onClick={() => fileRef.current?.click()}>{importing ? <LoaderCircle className="animate-spin" /> : <Upload className="mr-1 h-4 w-4" />} {importing ? "ছবি যোগ হচ্ছে" : "ছবি আপলোড"}</Button>
         <input ref={fileRef} hidden type="file" accept="image/*" multiple onChange={(e) => { const files = Array.from(e.target.files ?? []); e.target.value = ""; void onFiles(files); }} />
       </PageHeader>
@@ -241,12 +250,15 @@ function PhotoStudio() {
               <Ctl l={`উজ্জ্বলতা ${bright}%`}><Slider min={50} max={150} value={[bright]} onValueChange={(v) => setBright(v[0])} /></Ctl>
               <Ctl l={`কনট্রাস্ট ${contrast}%`}><Slider min={50} max={150} value={[contrast]} onValueChange={(v) => setContrast(v[0])} /></Ctl>
               <Ctl l={`রঙ ${sat}%`}><Slider min={0} max={150} value={[sat]} onValueChange={(v) => setSat(v[0])} /></Ctl>
+              {([{ key: 'smooth', label: 'ত্বক মসৃণ', min: 0 }, { key: 'soft', label: 'সফট', min: 0 }, { key: 'warmth', label: 'রঙের উষ্ণতা', min: -50 }, { key: 'face', label: 'মুখের আলো', min: -50 }, { key: 'hair', label: 'চুলের গাঢ়ত্ব', min: -50 }] as const).map(control => <Ctl key={control.key} l={`${control.label} ${retouch[control.key]}`}><Slider aria-label={control.label} min={control.min} max={control.min === 0 ? 100 : 50} value={[retouch[control.key]]} onValueChange={v => setRetouch(current => ({ ...current, [control.key]: v[0] }))} /></Ctl>)}
+              <Button variant="outline" onClick={() => setRetouch(neutralRetouch)}><Undo2 /> সমন্বয় রিসেট</Button>
               <Ctl l="ফাঁকা অংশের রঙ"><div className="flex gap-2">{["#ffffff", "#dbe9f7", "#2563eb", "#e5e7eb"].map((c) => <button key={c} aria-label={c} onClick={() => setBg(c)} className={`h-8 w-8 rounded border-2 ${bg === c ? "border-teal" : "border-border"}`} style={{ background: c }} />)}<input type="color" value={bg} onChange={(e) => setBg(e.target.value)} className="h-8 w-10" /></div></Ctl>
             </div>
           )}
           {src && <div className="flex flex-wrap items-center gap-3 border-t pt-4">
             {single && <img src={single} alt="সম্পাদিত ছবি" className="h-24 w-20 object-contain" />}
             <Button variant="outline" disabled={!single || !!busy} onClick={() => single && dl(single, `photo-${w}x${h}mm.jpg`)}><Download /> একক ছবি</Button>
+            <Button variant="outline" disabled={!!busy} onClick={() => setCropOpen(true)}><Crop /> নিজের মতো ক্রপ</Button>
             <Button variant="outline" disabled={!single || !!busy} onClick={() => { if (commitPhoto()) toast.success("ছবি ট্রেতে রাখা হয়েছে"); }}><ImagePlus /> {editingId ? "ট্রের ছবি আপডেট" : "ট্রেতে যোগ করুন"}</Button>
             <Button disabled={!single || !!busy} onClick={() => { if (commitPhoto()) setStep(2); }}>প্রিন্ট শিট তৈরি <ArrowRight /></Button>
           </div>}
@@ -264,6 +276,7 @@ function PhotoStudio() {
               {removed ? "ব্যাকগ্রাউন্ড রিমুভ হয়েছে" : "ব্যাকগ্রাউন্ড রিমুভ"}
             </Button>
             <div className="flex gap-2">
+              <select aria-label="আপস্কেল পদ্ধতি" className="min-w-0 rounded-md border bg-card px-1" value={upscaleMode} onChange={e => setUpscaleMode(e.target.value as 'fast' | 'ai')} disabled={!!busy}><option value="fast">দ্রুত রিসাইজ</option><option value="ai">AI বিস্তারিত</option></select>
               <select aria-label="আপস্কেল মাত্রা" className="h-9 rounded-md border bg-card px-2" value={scale} disabled={!!busy} onChange={(e) => setScale(Number(e.target.value) as 2 | 4)}>
                 <option value={2}>২×</option><option value={4}>৪×</option>
               </select>
@@ -301,6 +314,7 @@ function PhotoStudio() {
           </div>
         </aside>
       </div>}
+      {src && <PhotoCropDialog src={src} open={cropOpen} onClose={() => setCropOpen(false)} onApply={replaceSource} />}
     </div>
   );
 }
