@@ -6,3 +6,7 @@
 - [x] Verify mixed passport/stamp copies, navigation, downloads, and small-screen layout.
 - [x] Fix batch photo uploads and verify all selected photos appear on the print sheet.
 - [ ] Stack stamp copies in vertical pairs and verify mixed-photo print placement.
+- [ ] Speed up local background removal and upscaling without changing portrait identity.
+- [ ] Add smoothness, softness, face color and hair adjustments plus flexible crop controls.
+- [ ] Add document scan cropping, perspective correction and print export.
+- [ ] Add front/back ID scans with manual/automatic cropping and Bangladesh ID-size printing.
