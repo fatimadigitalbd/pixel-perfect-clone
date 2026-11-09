@@ -155,6 +155,86 @@ export type Database = {
         }
         Relationships: []
       }
+      product_movements: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          kind: string
+          moved_on: string
+          note: string | null
+          product_id: string
+          qty: number
+          unit_cost: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          kind: string
+          moved_on?: string
+          note?: string | null
+          product_id: string
+          qty: number
+          unit_cost?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          kind?: string
+          moved_on?: string
+          note?: string | null
+          product_id?: string
+          qty?: number
+          unit_cost?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          category: string
+          cost_price: number
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+          sell_price: number
+          unit: string
+        }
+        Insert: {
+          category?: string
+          cost_price?: number
+          created_at?: string
+          created_by?: string
+          id?: string
+          name: string
+          sell_price?: number
+          unit?: string
+        }
+        Update: {
+          category?: string
+          cost_price?: number
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+          sell_price?: number
+          unit?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

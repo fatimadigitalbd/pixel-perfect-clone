@@ -16,11 +16,13 @@ import { Route as TrackRouteImport } from './routes/track'
 import { Route as UploadRouteImport } from './routes/upload'
 import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticated/accounts'
 import { Route as AuthenticatedCardsRouteImport } from './routes/_authenticated/cards'
+import { Route as AuthenticatedCvRouteImport } from './routes/_authenticated/cv'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDocumentsRouteImport } from './routes/_authenticated/documents'
 import { Route as AuthenticatedJobsRouteImport } from './routes/_authenticated/jobs'
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as AuthenticatedPhotoRouteImport } from './routes/_authenticated/photo'
+import { Route as AuthenticatedProductsRouteImport } from './routes/_authenticated/products'
 import { Route as AuthenticatedScanRouteImport } from './routes/_authenticated/scan'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
 
@@ -58,6 +60,11 @@ const AuthenticatedCardsRoute = AuthenticatedCardsRouteImport.update({
   path: '/cards',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCvRoute = AuthenticatedCvRouteImport.update({
+  id: '/cv',
+  path: '/cv',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -83,6 +90,11 @@ const AuthenticatedPhotoRoute = AuthenticatedPhotoRouteImport.update({
   path: '/photo',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProductsRoute = AuthenticatedProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedScanRoute = AuthenticatedScanRouteImport.update({
   id: '/scan',
   path: '/scan',
@@ -101,11 +113,13 @@ export interface FileRoutesByFullPath {
   '/upload': typeof UploadRoute
   '/accounts': typeof AuthenticatedAccountsRoute
   '/cards': typeof AuthenticatedCardsRoute
+  '/cv': typeof AuthenticatedCvRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/documents': typeof AuthenticatedDocumentsRoute
   '/jobs': typeof AuthenticatedJobsRoute
   '/orders': typeof AuthenticatedOrdersRoute
   '/photo': typeof AuthenticatedPhotoRoute
+  '/products': typeof AuthenticatedProductsRoute
   '/scan': typeof AuthenticatedScanRoute
   '/team': typeof AuthenticatedTeamRoute
 }
@@ -116,11 +130,13 @@ export interface FileRoutesByTo {
   '/upload': typeof UploadRoute
   '/accounts': typeof AuthenticatedAccountsRoute
   '/cards': typeof AuthenticatedCardsRoute
+  '/cv': typeof AuthenticatedCvRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/documents': typeof AuthenticatedDocumentsRoute
   '/jobs': typeof AuthenticatedJobsRoute
   '/orders': typeof AuthenticatedOrdersRoute
   '/photo': typeof AuthenticatedPhotoRoute
+  '/products': typeof AuthenticatedProductsRoute
   '/scan': typeof AuthenticatedScanRoute
   '/team': typeof AuthenticatedTeamRoute
 }
@@ -133,11 +149,13 @@ export interface FileRoutesById {
   '/upload': typeof UploadRoute
   '/_authenticated/accounts': typeof AuthenticatedAccountsRoute
   '/_authenticated/cards': typeof AuthenticatedCardsRoute
+  '/_authenticated/cv': typeof AuthenticatedCvRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/documents': typeof AuthenticatedDocumentsRoute
   '/_authenticated/jobs': typeof AuthenticatedJobsRoute
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
   '/_authenticated/photo': typeof AuthenticatedPhotoRoute
+  '/_authenticated/products': typeof AuthenticatedProductsRoute
   '/_authenticated/scan': typeof AuthenticatedScanRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
 }
@@ -150,11 +168,13 @@ export interface FileRouteTypes {
     | '/upload'
     | '/accounts'
     | '/cards'
+    | '/cv'
     | '/dashboard'
     | '/documents'
     | '/jobs'
     | '/orders'
     | '/photo'
+    | '/products'
     | '/scan'
     | '/team'
   fileRoutesByTo: FileRoutesByTo
@@ -165,11 +185,13 @@ export interface FileRouteTypes {
     | '/upload'
     | '/accounts'
     | '/cards'
+    | '/cv'
     | '/dashboard'
     | '/documents'
     | '/jobs'
     | '/orders'
     | '/photo'
+    | '/products'
     | '/scan'
     | '/team'
   id:
@@ -181,11 +203,13 @@ export interface FileRouteTypes {
     | '/upload'
     | '/_authenticated/accounts'
     | '/_authenticated/cards'
+    | '/_authenticated/cv'
     | '/_authenticated/dashboard'
     | '/_authenticated/documents'
     | '/_authenticated/jobs'
     | '/_authenticated/orders'
     | '/_authenticated/photo'
+    | '/_authenticated/products'
     | '/_authenticated/scan'
     | '/_authenticated/team'
   fileRoutesById: FileRoutesById
@@ -249,6 +273,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCardsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/cv': {
+      id: '/_authenticated/cv'
+      path: '/cv'
+      fullPath: '/cv'
+      preLoaderRoute: typeof AuthenticatedCvRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -284,6 +315,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPhotoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/products': {
+      id: '/_authenticated/products'
+      path: '/products'
+      fullPath: '/products'
+      preLoaderRoute: typeof AuthenticatedProductsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/scan': {
       id: '/_authenticated/scan'
       path: '/scan'
@@ -304,11 +342,13 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountsRoute: typeof AuthenticatedAccountsRoute
   AuthenticatedCardsRoute: typeof AuthenticatedCardsRoute
+  AuthenticatedCvRoute: typeof AuthenticatedCvRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDocumentsRoute: typeof AuthenticatedDocumentsRoute
   AuthenticatedJobsRoute: typeof AuthenticatedJobsRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
   AuthenticatedPhotoRoute: typeof AuthenticatedPhotoRoute
+  AuthenticatedProductsRoute: typeof AuthenticatedProductsRoute
   AuthenticatedScanRoute: typeof AuthenticatedScanRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
 }
@@ -316,11 +356,13 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountsRoute: AuthenticatedAccountsRoute,
   AuthenticatedCardsRoute: AuthenticatedCardsRoute,
+  AuthenticatedCvRoute: AuthenticatedCvRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDocumentsRoute: AuthenticatedDocumentsRoute,
   AuthenticatedJobsRoute: AuthenticatedJobsRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
   AuthenticatedPhotoRoute: AuthenticatedPhotoRoute,
+  AuthenticatedProductsRoute: AuthenticatedProductsRoute,
   AuthenticatedScanRoute: AuthenticatedScanRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
 }

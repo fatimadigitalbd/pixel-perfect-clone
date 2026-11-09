@@ -8,6 +8,8 @@ const dict = {
   photo: ["পাসপোর্ট ছবি", "Passport Photo"],
   scan: ["ডকুমেন্ট ও আইডি স্ক্যান", "Document & ID Scan"],
   documents: ["বাংলা ডকুমেন্ট", "Bangla Documents"],
+  products: ["পণ্য ও স্টক", "Products & Stock"],
+  cv: ["সিভি তৈরি", "CV Maker"],
   cards: ["কার্ড ডিজাইনার", "Card Designer"],
   orders: ["কাস্টমার অর্ডার", "Customer Orders"],
   jobs: ["চাকরির খবর", "Job Circulars"],

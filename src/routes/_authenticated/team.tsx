@@ -6,6 +6,8 @@ import { PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { useMe } from "@/hooks/use-session";
 import { audit } from "@/lib/queries";
+import { Input } from "@/components/ui/input";
+import { createStaff } from "@/lib/staff.functions";
 
 export const Route = createFileRoute("/_authenticated/team")({
   head: () => ({ meta: [{"title": "স্টাফ ও সেটিংস — Fatima Digital"}, {"name": "description", "content": "দোকানের স্টাফ অনুমোদন ও কার্যকলাপ পর্যালোচনা।"}, {"property": "og:title", "content": "স্টাফ ও সেটিংস — Fatima Digital"}, {"property": "og:description", "content": "দোকানের স্টাফ অনুমোদন ও কার্যকলাপ পর্যালোচনা।"}, {"property": "og:type", "content": "website"}, {"name": "twitter:card", "content": "summary"}] }),
@@ -49,7 +51,20 @@ function Team() {
 
   return (
     <div className="mx-auto max-w-4xl">
-      <PageHeader title="স্টাফ ও সেটিংস" sub="নতুন স্টাফ /auth পেজে অ্যাকাউন্ট খুললে এখানে দেখা যাবে — অনুমোদন দিন" />
+      <PageHeader title="স্টাফ ও সেটিংস" sub="নতুন রেজিস্ট্রেশন বন্ধ — এখান থেকে স্টাফের লগইন তৈরি করুন" />
+      <form className="mb-5 grid gap-2 rounded-xl border bg-card p-4 shadow-card md:grid-cols-4" onSubmit={async (e) => {
+        e.preventDefault(); const f = new FormData(e.currentTarget); const form = e.currentTarget;
+        try {
+          await createStaff({ data: { name: String(f.get("name")), email: String(f.get("email")), password: String(f.get("password")) } });
+          toast.success("স্টাফ লগইন তৈরি হয়েছে"); form.reset(); await audit("staff.create", { email: String(f.get("email")) });
+          qc.invalidateQueries({ queryKey: ["team"] });
+        } catch (err) { toast.error((err as Error).message); }
+      }}>
+        <Input name="name" placeholder="নাম" required />
+        <Input name="email" type="email" placeholder="ইমেইল" required />
+        <Input name="password" type="text" minLength={8} placeholder="পাসওয়ার্ড (৮+)" required />
+        <Button>স্টাফ যোগ করুন</Button>
+      </form>
       <div className="overflow-hidden rounded-xl border bg-card shadow-card">
         <table className="w-full text-sm">
           <thead className="bg-muted text-left text-muted-foreground"><tr><th className="p-3">নাম</th><th className="p-3">ইমেইল</th><th className="p-3">ভূমিকা</th><th className="p-3" /></tr></thead>
