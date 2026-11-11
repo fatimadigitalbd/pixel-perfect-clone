@@ -4,7 +4,7 @@ import Cropper, { type Area } from "react-easy-crop";
 import { toast } from "sonner";
 import { Upload, Download, RotateCw, Eraser, Scan, Undo2, LoaderCircle, ArrowRight, ImagePlus, Check, Crop, FileScan } from "lucide-react";
 import { PhotoCropDialog } from '@/components/PhotoCropDialog';
-import { neutralRetouch, retouchCanvas } from '@/lib/photo-retouch';
+import { autoEnhance, neutralRetouch, retouchCanvas } from '@/lib/photo-retouch';
 import { PhotoSheetComposer } from "@/components/PhotoSheetComposer";
 import { type SheetPhoto } from "@/lib/photo-layout";
 import { PageHeader } from "@/components/AppShell";
@@ -250,8 +250,8 @@ function PhotoStudio() {
               <Ctl l={`উজ্জ্বলতা ${bright}%`}><Slider min={50} max={150} value={[bright]} onValueChange={(v) => setBright(v[0])} /></Ctl>
               <Ctl l={`কনট্রাস্ট ${contrast}%`}><Slider min={50} max={150} value={[contrast]} onValueChange={(v) => setContrast(v[0])} /></Ctl>
               <Ctl l={`রঙ ${sat}%`}><Slider min={0} max={150} value={[sat]} onValueChange={(v) => setSat(v[0])} /></Ctl>
-              {([{ key: 'smooth', label: 'ত্বক মসৃণ', min: 0 }, { key: 'soft', label: 'সফট', min: 0 }, { key: 'warmth', label: 'রঙের উষ্ণতা', min: -50 }, { key: 'face', label: 'মুখের আলো', min: -50 }, { key: 'hair', label: 'চুলের গাঢ়ত্ব', min: -50 }] as const).map(control => <Ctl key={control.key} l={`${control.label} ${retouch[control.key]}`}><Slider aria-label={control.label} min={control.min} max={control.min === 0 ? 100 : 50} value={[retouch[control.key]]} onValueChange={v => setRetouch(current => ({ ...current, [control.key]: v[0] }))} /></Ctl>)}
-              <Button variant="outline" onClick={() => setRetouch(neutralRetouch)}><Undo2 /> সমন্বয় রিসেট</Button>
+              {([{ key: 'smooth', label: 'ত্বক মসৃণ', min: 0 }, { key: 'soft', label: 'সফট', min: 0 }, { key: 'warmth', label: 'রঙের উষ্ণতা', min: -50 }, { key: 'face', label: 'মুখের আলো', min: -50 }, { key: 'hair', label: 'চুলের গাঢ়ত্ব', min: -50 }, { key: 'spots', label: 'দাগ/ধুলা পরিষ্কার', min: 0 }, { key: 'sharpen', label: 'পরিষ্কার/শার্প', min: 0 }] as const).map(control => <Ctl key={control.key} l={`${control.label} ${retouch[control.key]}`}><Slider aria-label={control.label} min={control.min} max={control.min === 0 ? 100 : 50} value={[retouch[control.key]]} onValueChange={v => setRetouch(current => ({ ...current, [control.key]: v[0] }))} /></Ctl>)}
+              <div className="flex flex-wrap gap-2"><Button onClick={() => { setRetouch(autoEnhance); setBright(104); setContrast(106); setSat(104); }}>✨ অটো এনহ্যান্স</Button><Button variant="outline" onClick={() => setRetouch(neutralRetouch)}><Undo2 /> সমন্বয় রিসেট</Button></div>
               <Ctl l="ফাঁকা অংশের রঙ"><div className="flex gap-2">{["#ffffff", "#dbe9f7", "#2563eb", "#e5e7eb"].map((c) => <button key={c} aria-label={c} onClick={() => setBg(c)} className={`h-8 w-8 rounded border-2 ${bg === c ? "border-teal" : "border-border"}`} style={{ background: c }} />)}<input type="color" value={bg} onChange={(e) => setBg(e.target.value)} className="h-8 w-10" /></div></Ctl>
             </div>
           )}

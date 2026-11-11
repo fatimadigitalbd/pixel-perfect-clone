@@ -103,7 +103,7 @@ function ScanStudio() {
       </div>
       <aside className="space-y-4">
         <Button className="w-full" variant="outline" disabled={!active || busy} onClick={auto}>{busy ? <LoaderCircle className="animate-spin" /> : <ScanLine />} অটো ক্রপ</Button>
-        <Button className="w-full" variant="outline" disabled={!active || busy} onClick={() => { if (active) update({ ...active, result: null, corners: defaultCorners() }); }}><Undo2 /> কোণা রিসেট</Button>
+        <Button className="w-full" variant="outline" disabled={!active || busy} onClick={() => { if (active) update({ ...active, result: null, corners: defaultCorners() }); }}><Undo2 /> হাতে ক্রপ (কোণা টানুন)</Button>
         <label className="block text-sm">স্ক্যান রঙ<select aria-label="স্ক্যান রঙ" value={filter} disabled={busy} onChange={e => { setFilter(e.target.value); setSheet(null); }} className="mt-1 h-9 w-full rounded-md border bg-card px-2"><option value="color">রঙিন</option><option value="gray">গ্রেস্কেল</option><option value="bw">সাদা-কালো</option></select></label>
         <label className="block space-y-2 text-sm"><span>উজ্জ্বলতা {brightness}%</span><Slider aria-label="স্ক্যান উজ্জ্বলতা" disabled={busy} min={70} max={160} value={[brightness]} onValueChange={v => setBrightness(v[0])} /></label>
         <label className="block space-y-2 text-sm"><span>কনট্রাস্ট {contrast}%</span><Slider aria-label="স্ক্যান কনট্রাস্ট" disabled={busy} min={70} max={200} value={[contrast]} onValueChange={v => setContrast(v[0])} /></label>

@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_authenticated/cv")({
   component: CvMaker,
 });
 
-type Cv = Record<string, string>;
+type Cv = Partial<Record<"name"|"title"|"phone"|"email"|"address"|"permanent"|"father"|"mother"|"dob"|"nid"|"religion"|"marital"|"nationality"|"blood"|"objective"|"education"|"experience"|"skills"|"languages"|"reference", string>> & Record<string, string | undefined>;
 const FORMATS = [
   { id: "en-classic", l: "English — Classic", lang: "en" },
   { id: "en-modern", l: "English — Modern (sidebar)", lang: "en" },

@@ -18,9 +18,17 @@ export async function removePhotoBackground(src: string, progress: (value: numbe
       return pipeline('background-removal', 'Xenova/modnet', { ...options, device: 'wasm' });
     })().catch(error => { segmenterPromise = undefined; throw error; });
   }
-  const segmenter = await segmenterPromise;
+  let segmenter = await segmenterPromise;
   progress(90);
-  const output = await segmenter(src);
+  let output;
+  try { output = await (segmenter as unknown as (s: string) => Promise<{ toBlob: (t: string) => Promise<Blob> }>)(src); }
+  catch {
+    // WebGPU can load but fail at inference on some GPUs: rebuild on WASM once.
+    const { pipeline } = await import('@huggingface/transformers');
+    segmenterPromise = pipeline('background-removal', 'Xenova/modnet', { dtype: 'fp32', device: 'wasm' }) as Promise<Segmenter>;
+    segmenter = await segmenterPromise;
+    output = await (segmenter as unknown as (s: string) => Promise<{ toBlob: (t: string) => Promise<Blob> }>)(src);
+  }
   const blob: Blob = await output.toBlob('image/png');
   progress(100);
   return blob;

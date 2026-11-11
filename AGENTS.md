@@ -18,3 +18,6 @@
 - Portrait AI sessions and upscale models are cached in browser-only modules, with an explicitly labeled non-AI resize mode — avoids repeated initialization without claiming invented detail.
 - Scan images stay session-local; dynamic OpenCV and jscanify provide automatic corner detection and validated manual perspective correction — personal documents never leave the browser.
 - Scanner card printing uses configurable physical dimensions on a 300-DPI A4 canvas — accommodates card formats without assuming all national IDs have the same size.
+- Public sign-up is disabled; the admin creates staff logins through `createStaff` (server fn, admin-verified, then admin client) — keeps the shop staff-only.
+- Products track stock and profit via `product_movements` (purchase/sale rows with unit cost and price); reports are computed in `src/lib/product-report.ts` — preserves the cost at time of sale.
+- Scanner falls back to pure-JS corner detection and homography warp when OpenCV fails to load — scanning never depends on a heavy download.
