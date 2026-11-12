@@ -6,11 +6,9 @@ let runtime: Promise<{ cv: CV; scanner: Scanner }> | undefined;
 async function loadRuntime() {
   if (!runtime) runtime = (async () => {
     const imported = await import('@techstark/opencv-js');
-    const module = imported.default;
-    const cv = await new Promise<CV>(resolve => {
-      if (module instanceof Promise) module.then(resolve);
-      else if (module.Mat) resolve(module);
-      else module.onRuntimeInitialized = () => resolve(module);
+    const module = await imported.default;
+    const cv = module.Mat ? module : await new Promise<CV>(resolve => {
+      module.onRuntimeInitialized = () => resolve(module);
     });
     Object.assign(globalThis, { cv });
     const { default: ScannerClass } = await import('jscanify/client');
