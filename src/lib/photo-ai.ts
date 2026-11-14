@@ -3,32 +3,26 @@ type Segmenter = import('@huggingface/transformers').BackgroundRemovalPipeline;
 let segmenterPromise: Promise<Segmenter> | undefined;
 let reportProgress: (value: number) => void = () => {};
 
+export function backgroundRemovalOptions(progress_callback: (event: { status: string; progress?: number }) => void) {
+  return { dtype: 'fp32' as const, device: 'wasm' as const, progress_callback };
+}
+
 export async function removePhotoBackground(src: string, progress: (value: number) => void) {
   reportProgress = progress;
   if (!segmenterPromise) {
     segmenterPromise = (async () => {
       const { pipeline, env } = await import('@huggingface/transformers');
       env.allowLocalModels = false;
-      const options = { dtype: 'fp32' as const, progress_callback: (event: { status: string; progress?: number }) => {
+      const options = backgroundRemovalOptions((event) => {
         if (event.status === 'progress') reportProgress(Math.min(85, Math.round((event.progress ?? 0) * .85)));
-      } };
-      if ('gpu' in navigator) {
-        try { return await pipeline('background-removal', 'Xenova/modnet', { ...options, device: 'webgpu' }); } catch { /* Unsupported adapter: use WASM. */ }
-      }
-      return pipeline('background-removal', 'Xenova/modnet', { ...options, device: 'wasm' });
+      });
+      // Use CPU/WASM directly: navigator.gpu can exist even when no GPU adapter is available.
+      return pipeline('background-removal', 'Xenova/modnet', options);
     })().catch(error => { segmenterPromise = undefined; throw error; });
   }
-  let segmenter = await segmenterPromise;
+  const segmenter = await segmenterPromise;
   progress(90);
-  let output;
-  try { output = await (segmenter as unknown as (s: string) => Promise<{ toBlob: (t: string) => Promise<Blob> }>)(src); }
-  catch {
-    // WebGPU can load but fail at inference on some GPUs: rebuild on WASM once.
-    const { pipeline } = await import('@huggingface/transformers');
-    segmenterPromise = pipeline('background-removal', 'Xenova/modnet', { dtype: 'fp32', device: 'wasm' }) as Promise<Segmenter>;
-    segmenter = await segmenterPromise;
-    output = await (segmenter as unknown as (s: string) => Promise<{ toBlob: (t: string) => Promise<Blob> }>)(src);
-  }
+  const output = await (segmenter as unknown as (s: string) => Promise<{ toBlob: (t: string) => Promise<Blob> }>)(src);
   const blob: Blob = await output.toBlob('image/png');
   progress(100);
   return blob;
